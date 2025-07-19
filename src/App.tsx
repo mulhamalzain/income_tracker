@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 type RecordItem = {
   id: number;
@@ -11,15 +11,31 @@ type RecordItem = {
 const categories = ['Income', 'Expense'];
 
 const App: React.FC = () => {
-  const [records, setRecords] = useState<RecordItem[]>([]);
-  const [form, setForm] = useState({
-    name: '',
-    amount: '',
-    category: '',
-    date: ''
+  const [records, setRecords] = useState<RecordItem[]>(() => {
+    const saved = localStorage.getItem('records-data');
+    return saved ? JSON.parse(saved) : [];
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const [form, setForm] = useState(() => {
+    const saved = localStorage.getItem('form-data');
+    return saved
+      ? JSON.parse(saved)
+      : { name: '', amount: '', category: '', date: '' };
+  });
+
+  // 🔁 Keep records saved
+  useEffect(() => {
+    localStorage.setItem('records-data', JSON.stringify(records));
+  }, [records]);
+
+  // 🔁 Keep form inputs saved
+  useEffect(() => {
+    localStorage.setItem('form-data', JSON.stringify(form));
+  }, [form]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -31,32 +47,34 @@ const App: React.FC = () => {
       name: form.name,
       amount: parseFloat(form.amount),
       category: form.category,
-      date: form.date
+      date: form.date,
     };
 
     setRecords([...records, newRecord]);
     setForm({ name: '', amount: '', category: '', date: '' });
+    localStorage.removeItem('form-data');
   };
 
   const handleDelete = (id: number) => {
-    setRecords(records.filter((rec) => rec.id !== id));
+    setRecords(records.filter((r) => r.id !== id));
   };
 
   const handleEdit = (id: number) => {
-    const record = records.find((rec) => rec.id === id);
+    const record = records.find((r) => r.id === id);
     if (record) {
       setForm({
         name: record.name,
         amount: record.amount.toString(),
         category: record.category,
-        date: record.date
+        date: record.date,
       });
-      setRecords(records.filter((rec) => rec.id !== id));
+      setRecords(records.filter((r) => r.id !== id));
     }
   };
 
-  const total = records.reduce((sum, rec) =>
-    rec.category === 'Expense' ? sum - rec.amount : sum + rec.amount,
+  const total = records.reduce(
+    (sum, rec) =>
+      rec.category === 'Expense' ? sum - rec.amount : sum + rec.amount,
     0
   );
 
