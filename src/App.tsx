@@ -23,12 +23,12 @@ const App: React.FC = () => {
       : { name: '', amount: '', category: '', date: '' };
   });
 
-  // 🔁 Keep records saved
+ 
   useEffect(() => {
     localStorage.setItem('records-data', JSON.stringify(records));
   }, [records]);
 
-  // 🔁 Keep form inputs saved
+ 
   useEffect(() => {
     localStorage.setItem('form-data', JSON.stringify(form));
   }, [form]);
