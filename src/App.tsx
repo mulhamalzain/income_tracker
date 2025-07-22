@@ -76,7 +76,7 @@ const App: React.FC = () => {
     (sum, rec) =>
       rec.category === 'Expense' ? sum - rec.amount : sum + rec.amount,
     0
-  );
+  ); 
 
   return (
     <div className="App">
@@ -124,8 +124,9 @@ const App: React.FC = () => {
         <button type="submit">Add</button>
       </form>
 
-      <table>
-        <thead>
+          <div className ="expense-table">
+      <table >
+        <thead >
           <tr>
             <th>Name</th>
             <th>Amount</th>
@@ -149,7 +150,7 @@ const App: React.FC = () => {
           ))}
         </tbody>
       </table>
-
+</div>
       <div>
         <strong>Total:</strong>{' '}
         <span style={{ color: total < 0 ? 'red' : 'green' }}>

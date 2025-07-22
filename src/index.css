@@ -5,6 +5,9 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    padding: 0;
 }
 
 code {
@@ -12,12 +15,6 @@ code {
     monospace;
 }
 
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
-    margin: 0;
-    padding: 0;
-}
 
 .container {
     max-width: 800px;
@@ -26,23 +23,27 @@ body {
     background-color: #fff;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
+    justify-content: center;
 }
 
 h1 {
     text-align: center;
     margin-bottom: 20px;
+    justify-content: center;
 }
 
 form {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
+    justify-content: center;
 }
 
 form input, form select, form button {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
+    justify-content: center;
 }
 
 form button {
@@ -50,6 +51,7 @@ form button {
     color: white;
     border: none;
     cursor: pointer;
+    justify-content: center;
 }
 
 form button:hover {
@@ -60,34 +62,27 @@ form button:hover {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 20px;
+    justify-content: center;
 }
 
 .expense-table th, .expense-table td {
     padding: 10px;
     border: 1px solid #ddd;
-    text-align: left;
+    justify-content: center;
 }
 
 .expense-table th {
     background-color: #f8f8f8;
+    justify-content: center;
 }
 
 .total-amount {
-    text-align: right;
+    text-align: center;
     font-size: 18px;
+    justify-content: center;
+    
 }
-
-.filter {
-    margin-bottom: 20px;
-    text-align: right;
-}
-
-.filter label {
-    margin-right: 10px;
-}
-
-.filter select {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+.expense-table {
+   justify-content: center;
+   text-align: center;
 }
