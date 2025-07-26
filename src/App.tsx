@@ -11,13 +11,13 @@ type RecordItem = {
 const categories = ['Income', 'Expense'];
 
 const App: React.FC = () => {
-  // Records
+ 
   const [records, setRecords] = useState<RecordItem[]>(() => {
     const saved = localStorage.getItem('records-data');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Form
+ 
   const [form, setForm] = useState(() => {
     const saved = localStorage.getItem('form-data');
     return saved
@@ -25,7 +25,7 @@ const App: React.FC = () => {
       : { name: '', amount: '', category: '', date: '' };
   });
 
-  // Target and Savings (persisted)
+  
   const [target, setTarget] = useState(() => {
     const saved = localStorage.getItem('target-savings');
     return saved ? JSON.parse(saved) : 0;
@@ -38,7 +38,7 @@ const App: React.FC = () => {
 
   const [amoutToTransfer, setAmountToTransfer] = useState('');
 
-  // Auto-save records and form
+ 
   useEffect(() => {
     localStorage.setItem('records-data', JSON.stringify(records));
   }, [records]);
@@ -47,7 +47,7 @@ const App: React.FC = () => {
     localStorage.setItem('form-data', JSON.stringify(form));
   }, [form]);
 
-  // Auto-save target and savings
+
   useEffect(() => {
     localStorage.setItem('target-savings', JSON.stringify(target));
   }, [target]);
@@ -117,7 +117,7 @@ const App: React.FC = () => {
     <div className="App">
       <h1>Income & Expense Tracker</h1>
 
-      {/* Input Form */}
+
       <form onSubmit={handleSubmit}>
         <input
           type="text"
@@ -160,7 +160,7 @@ const App: React.FC = () => {
         <button type="submit">Add</button>
       </form>
 
-      {/* Records Table */}
+      
       <div className="expense-table">
         <table>
           <thead>
@@ -189,7 +189,7 @@ const App: React.FC = () => {
         </table>
       </div>
 
-      {/* Net Total */}
+     
       <div>
         <strong>Total:</strong>{' '}
         <span style={{ color: netTotal < 0 ? 'red' : 'green' }}>
@@ -197,7 +197,7 @@ const App: React.FC = () => {
         </span>
       </div>
 
-      {/* Target Savings Form */}
+   
       <form
         className="target_savings"
         onSubmit={(e) => {
@@ -216,7 +216,7 @@ const App: React.FC = () => {
         </button>
       </form>
 
-      {/* Target and Current Savings */}
+      
       <div className="Target">
         <strong>Target:</strong> <span>{target}</span>
       </div>
@@ -224,7 +224,7 @@ const App: React.FC = () => {
         <strong>Current savings:</strong> <span>{currentsavings}</span>
       </div>
 
-      {/* Transfer Form */}
+     
       <form
         onSubmit={handleTransfer}
         className="transfer_to_savings_account"
@@ -242,7 +242,7 @@ const App: React.FC = () => {
         <button>Transfer</button>
       </form>
 
-      {/* Progress Bar */}
+      
       <div
         style={{
           border: '1px solid #ccc',
