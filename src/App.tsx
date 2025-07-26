@@ -1,31 +1,44 @@
 import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
-type RecordItem = {
-  id: number;
-  name: string;
-  amount: number;
-  category: string;
-  date: string;
-};
+// Schemas
+const recordSchema = z.object({
+  name: z.string().min(1, { message: 'Name is required' }),
+  amount: z
+    .string()
+    .transform((val) => parseFloat(val))
+    .refine((num) => !isNaN(num) && num > 0, { message: 'Amount must be positive' }),
+  category: z.enum(['Income', 'Expense'], { required_error: 'Select category' }),
+  date: z.string().min(1, { message: 'Date is required' }),
+});
 
-const categories = ['Income', 'Expense'];
+const targetSchema = z.object({
+  target: z
+    .string()
+    .transform((val) => parseFloat(val))
+    .refine((num) => !isNaN(num) && num > 0, { message: 'Target must be positive' }),
+});
+
+const transferSchema = z.object({
+  amount: z
+    .string()
+    .transform((val) => parseFloat(val))
+    .refine((num) => !isNaN(num) && num > 0, { message: 'Transfer must be positive' }),
+});
+
+type RecordItem = z.infer<typeof recordSchema> & { id: number };
+
+type TargetForm = z.infer<typeof targetSchema>;
+type TransferForm = z.infer<typeof transferSchema>;
 
 const App: React.FC = () => {
- 
   const [records, setRecords] = useState<RecordItem[]>(() => {
     const saved = localStorage.getItem('records-data');
     return saved ? JSON.parse(saved) : [];
   });
 
- 
-  const [form, setForm] = useState(() => {
-    const saved = localStorage.getItem('form-data');
-    return saved
-      ? JSON.parse(saved)
-      : { name: '', amount: '', category: '', date: '' };
-  });
-
-  
   const [target, setTarget] = useState(() => {
     const saved = localStorage.getItem('target-savings');
     return saved ? JSON.parse(saved) : 0;
@@ -36,17 +49,9 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : 0;
   });
 
-  const [amoutToTransfer, setAmountToTransfer] = useState('');
-
- 
   useEffect(() => {
     localStorage.setItem('records-data', JSON.stringify(records));
   }, [records]);
-
-  useEffect(() => {
-    localStorage.setItem('form-data', JSON.stringify(form));
-  }, [form]);
-
 
   useEffect(() => {
     localStorage.setItem('target-savings', JSON.stringify(target));
@@ -56,60 +61,56 @@ const App: React.FC = () => {
     localStorage.setItem('current-savings', JSON.stringify(currentsavings));
   }, [currentsavings]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({ resolver: zodResolver(recordSchema) });
+
+  const {
+    register: registerTarget,
+    handleSubmit: handleSubmitTarget,
+    formState: { errors: errorsTarget },
+    reset: resetTarget,
+  } = useForm<TargetForm>({ resolver: zodResolver(targetSchema) });
+
+  const {
+    register: registerTransfer,
+    handleSubmit: handleSubmitTransfer,
+    formState: { errors: errorsTransfer },
+    reset: resetTransfer,
+  } = useForm<TransferForm>({ resolver: zodResolver(transferSchema) });
+
+  const onRecordSubmit = (data: z.infer<typeof recordSchema>) => {
+    const newRecord = { ...data, id: Date.now() };
+    setRecords([...records, newRecord]);
+    reset();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newRecord: RecordItem = {
-      id: Date.now(),
-      name: form.name,
-      amount: parseFloat(form.amount),
-      category: form.category,
-      date: form.date,
-    };
-    setRecords([...records, newRecord]);
-    setForm({ name: '', amount: '', category: '', date: '' });
-    localStorage.removeItem('form-data');
+  const onTargetSubmit = (data: TargetForm) => {
+    setTarget(data.target);
+    resetTarget();
+  };
+
+  const onTransferSubmit = (data: TransferForm) => {
+    setCurrentsavings((prev) => prev + data.amount);
+    resetTransfer();
   };
 
   const handleDelete = (id: number) => {
     setRecords(records.filter((r) => r.id !== id));
   };
 
-  const handleEdit = (id: number) => {
-    const record = records.find((r) => r.id === id);
-    if (record) {
-      setForm({
-        name: record.name,
-        amount: record.amount.toString(),
-        category: record.category,
-        date: record.date,
-      });
-      setRecords(records.filter((r) => r.id !== id));
-    }
-  };
-
-  const handleTransfer = (e: React.FormEvent) => {
-    e.preventDefault();
-    const amount = parseFloat(amoutToTransfer);
-    if (!isNaN(amount) && amount > 0) {
-      setCurrentsavings((prev) => prev + amount);
-      setAmountToTransfer('');
-    }
+  const handleResetSavings = () => {
+    setCurrentsavings(0);
   };
 
   const total = records.reduce(
-    (sum, rec) =>
-      rec.category === 'Expense' ? sum - rec.amount : sum + rec.amount,
+    (sum, rec) => (rec.category === 'Expense' ? sum - rec.amount : sum + rec.amount),
     0
   );
-
   const netTotal = total - currentsavings;
-
   const progress = (currentsavings / (target || 1)) * 100;
   const clampedProgress = Math.min(progress, 130);
 
@@ -117,132 +118,84 @@ const App: React.FC = () => {
     <div className="App">
       <h1>Income & Expense Tracker</h1>
 
+      <form onSubmit={handleSubmit(onRecordSubmit)}>
+        <input {...register('name')} placeholder="Name" />
+        {errors.name && <p>{errors.name.message}</p>}
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="name"
-          value={form.name}
-          placeholder="Income/Expense Name"
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="number"
-          name="amount"
-          value={form.amount}
-          placeholder="Income/Expense Amount"
-          onChange={handleChange}
-          required
-        />
-        <select
-          name="category"
-          value={form.category}
-          onChange={handleChange}
-          required
-        >
+        <input type="number" {...register('amount')} placeholder="Amount" />
+        {errors.amount && <p>{errors.amount.message}</p>}
+
+        <select {...register('category')} defaultValue="">
           <option value="" disabled>
-            Select Income or Expense
+            Select Category
           </option>
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
+          <option value="Income">Income</option>
+          <option value="Expense">Expense</option>
         </select>
-        <input
-          type="date"
-          name="date"
-          value={form.date}
-          onChange={handleChange}
-          required
-        />
+        {errors.category && <p>{errors.category.message}</p>}
+
+        <input type="date" {...register('date')} />
+        {errors.date && <p>{errors.date.message}</p>}
+
         <button type="submit">Add</button>
       </form>
 
-      
-      <div className="expense-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Amount</th>
-              <th>Category</th>
-              <th>Date</th>
-              <th>Actions</th>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {records.map((rec) => (
+            <tr key={rec.id}>
+              <td>{rec.name}</td>
+              <td>${rec.amount.toFixed(2)}</td>
+              <td>{rec.category}</td>
+              <td>{rec.date}</td>
+              <td>
+                <button onClick={() => handleDelete(rec.id)}>Delete</button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {records.map((rec) => (
-              <tr key={rec.id}>
-                <td>{rec.name}</td>
-                <td>${rec.amount.toFixed(2)}</td>
-                <td>{rec.category}</td>
-                <td>{rec.date}</td>
-                <td>
-                  <button onClick={() => handleEdit(rec.id)}>Edit</button>
-                  <button onClick={() => handleDelete(rec.id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
 
-     
       <div>
-        <strong>Total:</strong>{' '}
+        <strong>Total (after savings):</strong>{' '}
         <span style={{ color: netTotal < 0 ? 'red' : 'green' }}>
           ${netTotal.toFixed(2)}
         </span>
       </div>
 
-   
-      <form
-        className="target_savings"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const value = e.target.elements['target savings'].value;
-          setTarget(Number(value));
-        }}
-      >
-        <input
-          type="number"
-          name="target savings"
-          placeholder="Target savings"
-        />
-        <button type="button" onClick={() => setTarget(0)}>
-          Reset Target
-        </button>
-      </form>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '30px' }}>
+        <div style={{ textAlign: 'center', flex: 1 }}>
+          <form onSubmit={handleSubmitTransfer(onTransferSubmit)}>
+            <input type="number" placeholder="Transfer amount" {...registerTransfer('amount')} />
+            {errorsTransfer.amount && <p>{errorsTransfer.amount.message}</p>}
+            <button type="submit">Transfer</button>
+          </form>
+        </div>
 
-      
-      <div className="Target">
-        <strong>Target:</strong> <span>{target}</span>
-      </div>
-      <div className="current_savings">
-        <strong>Current savings:</strong> <span>{currentsavings}</span>
+        <div style={{ textAlign: 'left', flex: 1 }}>
+          <form onSubmit={handleSubmitTarget(onTargetSubmit)}>
+            <input type="number" placeholder="Target savings" {...registerTarget('target')} />
+            {errorsTarget.target && <p>{errorsTarget.target.message}</p>}
+            <button type="submit">Set Target</button>
+            <button type="button" onClick={() => setTarget(0)}>Reset Target</button>
+          </form>
+          <p><strong>Target:</strong> {target}</p>
+        </div>
       </div>
 
-     
-      <form
-        onSubmit={handleTransfer}
-        className="transfer_to_savings_account"
-      >
-        <span className="strong">
-          <strong>Transfer to Savings Account:</strong>
-        </span>
-        <input
-          type="number"
-          name="transfer_to_savings_account"
-          placeholder="Transfer"
-          value={amoutToTransfer}
-          onChange={(e) => setAmountToTransfer(e.target.value)}
-        />
-        <button>Transfer</button>
-      </form>
+      <div style={{ marginTop: '20px' }}>
+        <strong>Current Savings:</strong> {currentsavings} <button onClick={handleResetSavings}>Reset Savings</button>
+      </div>
 
-      
       <div
         style={{
           border: '1px solid #ccc',
@@ -252,7 +205,7 @@ const App: React.FC = () => {
           marginTop: '20px',
           marginLeft: 'auto',
           marginRight: '0',
-          textAlign: 'right',
+          textAlign: 'center',
         }}
       >
         <div
@@ -265,9 +218,8 @@ const App: React.FC = () => {
           }}
         ></div>
       </div>
-      <p style={{ textAlign: 'right', marginRight: '0' }}>
-        {Math.floor(progress)}% of target
-      </p>
+
+      <p style={{ textAlign: 'center', marginRight: '0' }}>{Math.floor(progress)}% of target</p>
     </div>
   );
 };
